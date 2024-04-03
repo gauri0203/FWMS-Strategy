@@ -1,40 +1,31 @@
-import os
-import secrets
-from flask import Flask, render_template
-from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, BooleanField
-from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
-from flask_login import login_user, current_user, logout_user, login_required
+from flask import Flask, render_template, request, redirect, url_for, session
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = '4f2bfa6592418c6a7e50573998ce99db'
+app.secret_key = '4f2bfa6592418c6a7e50573998ce99db'
 
-class Login(FlaskForm):
-    email = StringField('Email',
-                        validators=[DataRequired(), Email()])
-    password = PasswordField('Password', validators=[DataRequired(), Length(min=6)])
-    submit = SubmitField('Login')
+# Mock database for user credentials
+users = {'fazle': '123456', 'gauri': '789100'}
 
 @app.route('/')
+def index():
+    return render_template('index.html')
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    form = Login()
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        if username in users and users[username] == password:
+            session['username'] = username
+            return redirect(url_for('index'))
+        else:
+            return render_template('login.html', error='Invalid username or password')
     return render_template('login.html')
 
-@app.route('/first')
-def first():
-    return render_template('first.html')
-
-@app.route("/home")
-@login_required
-def home():
-    return redirect(url_for('home'))
-
-@app.route("/logout")
+@app.route('/logout')
 def logout():
-    logout_user()
+    session.pop('username', None)
     return redirect(url_for('login'))
-
 
 if __name__ == '__main__':
     app.run(debug=True)
